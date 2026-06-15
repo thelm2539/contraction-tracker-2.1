@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fdf6ee">
+<title>Breathe & Birth</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #fdf6ee;
+    --warm-white: #fefaf5;
+    --sand: #e8d5bc;
+    --terracotta: #c97f5a;
+    --terracotta-light: #e09b77;
+    --deep: #6b3e26;
+    --blush: #f0c4a8;
+    --muted: #a08878;
+    --green: #7a9e7e;
+    --green-light: #a8c5aa;
+    --text: #3d2b1f;
+    --text-light: #8a6a5a;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35; }
+  .blob-1 { width: 60vw; height: 60vw; background: var(--blush); top: -10%; right: -15%; animation: drift1 18s ease-in-out infinite; }
+  .blob-2 { width: 45vw; height: 45vw; background: var(--sand); bottom: -5%; left: -10%; animation: drift2 22s ease-in-out infinite; }
+  .blob-3 { width: 30vw; height: 30vw; background: var(--green-light); bottom: 20%; right: 5%; opacity: 0.2; animation: drift3 15s ease-in-out infinite; }
+
+  @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-3%,4%) scale(1.05); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(4%,-3%) scale(1.08); } }
+  @keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-5%,6%); } }
+
+  #app {
+    position: relative; z-index: 1;
+    height: 100dvh;
+    display: flex; flex-direction: column;
+    padding: 0;
+  }
+
+  .connection-banner {
+    flex-shrink: 0;
+    background: var(--terracotta);
+    color: white;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 8px 16px;
+    display: none;
+  }
+  .connection-banner.visible { display: block; }
+
+  header {
+    padding: 16px 24px 8px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    flex-shrink: 0;
+  }
+  .app-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    color: var(--deep);
+  }
+  .app-title em { font-style: italic; color: var(--terracotta); }
+  .reset-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px; font-weight: 400;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); padding: 6px; opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .reset-btn:hover { opacity: 1; }
+
+  .session-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 0 20px 8px; flex-shrink: 0;
+  }
+  .session-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .session-code {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 400; color: var(--deep); letter-spacing: 0.12em;
+  }
+  .share-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid var(--sand);
+    font-family: 'Jost', sans-serif;
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--terracotta);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .share-btn:active { background: var(--blush); }
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--sand); transition: background 0.4s; flex-shrink: 0;
+  }
+  .sync-dot.connected { background: var(--green); }
+  .sync-dot.syncing { background: var(--terracotta-light); animation: dot-pulse 1s ease-in-out infinite; }
+
+  .stats-bar {
+    display: flex; padding: 0 20px 8px; flex-shrink: 0;
+  }
+  .stat { flex: 1; text-align: center; padding: 8px 6px; border-radius: 12px; }
+  .stat-value {
+    font-size: 18px; font-weight: 200; color: var(--deep); line-height: 1;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .stat-label {
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-top: 3px;
+  }
+  .stat-divider { width: 1px; background: var(--sand); margin: 6px 0; align-self: stretch; }
+
+  /* ── THRESHOLD CARD ── */
+  .threshold-card {
+    margin: 0 20px 8px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(232,213,188,0.6);
+    border-radius: 14px;
+    backdrop-filter: blur(4px);
+    flex-shrink: 0;
+    display: none;
+  }
+  .threshold-card.visible { display: block; }
+  .threshold-title {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px;
+  }
+  .threshold-meters { display: flex; gap: 10px; margin-bottom: 10px; }
+  .threshold-meter { flex: 1; }
+  .meter-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 10px; color: var(--text-light); margin-bottom: 4px;
+  }
+  .meter-value { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--deep); }
+  .meter-track {
+    height: 6px; background: var(--sand); border-radius: 3px;
+    position: relative; overflow: hidden;
+  }
+  .meter-target {
+    position: absolute; top: 0; bottom: 0;
+    background: rgba(122,158,126,0.25);
+    border-radius: 3px;
+  }
+  .meter-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--green-light), var(--green));
+    transition: width 0.5s ease;
+  }
+  .meter-fill.warn { background: linear-gradient(90deg, var(--terracotta-light), var(--terracotta)); }
+  .meter-target-label {
+    font-size: 8px; letter-spacing: 0.08em; color: var(--muted);
+    margin-top: 3px; text-transform: uppercase;
+  }
+  .threshold-status {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; margin-bottom: 8px;
+  }
+  .status-pip {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--sand); transition: background 0.3s, transform 0.3s;
+  }
+  .status-pip.active { background: var(--green); transform: scale(1.2); }
+  .status-pip.active.warn { background: var(--terracotta); }
+  .status-pip.active.urgent { background: var(--deep); }
+  .status-label {
+    font-size: 11px; letter-spacing: 0.04em; color: var(--text);
+    font-weight: 400;
+  }
+  .threshold-ref {
+    font-size: 10px; color: var(--text-light); line-height: 1.5;
+    text-align: center; font-style: italic;
+  }
+  .threshold-dynamic {
+    font-size: 11px; color: var(--green); text-align: center;
+    margin-top: 6px; letter-spacing: 0.03em;
+  }
+  .threshold-disclaimer {
+    font-size: 9px; color: var(--muted); text-align: center;
+    margin-top: 4px; letter-spacing: 0.03em;
+  }
+
+  /* ── GRAPH PANEL ── */
+  .graph-panel {
+    margin: 0 20px 8px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.45);
+    border: 1px solid rgba(232,213,188,0.5);
+    border-radius: 14px;
+    flex-shrink: 0;
+    display: none;
+  }
+  .graph-panel.visible { display: block; }
+  .graph-title {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .graph-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 8px;
+  }
+  .graph-scroll::-webkit-scrollbar { height: 3px; }
+  .graph-scroll::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 2px; }
+  .graph-svg { display: block; min-width: 100%; }
+  .trend-strip {
+    display: flex; align-items: flex-end; gap: 4px;
+    height: 36px; padding-top: 4px;
+  }
+  .trend-gap {
+    flex: 1; min-width: 12px; max-width: 24px;
+    background: var(--sand); border-radius: 2px;
+    position: relative;
+  }
+  .trend-gap.in-target { background: rgba(122,158,126,0.4); }
+  .trend-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .trend-bar {
+    width: 14px; border-radius: 3px 3px 0 0;
+    background: var(--terracotta-light);
+    min-height: 4px;
+  }
+  .trend-bar.in-target { background: var(--green); }
+  .trend-label { font-size: 7px; color: var(--muted); letter-spacing: 0.05em; }
+
+  .main {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0 24px;
+    min-height: 0;
+  }
+
+  .contraction-btn-wrap {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    width: 240px; height: 240px;
+  }
+
+  .pulse-ring {
+    position: absolute;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    border: 2px solid var(--terracotta-light);
+    opacity: 0; animation: none;
+    pointer-events: none;
+  }
+  .pulse-ring.active { animation: pulse-out 1.8s ease-out infinite; }
+  .pulse-ring-2 { animation-delay: 0.9s !important; border-color: var(--blush); }
+
+  @keyframes pulse-out {
+    0% { transform: scale(0.85); opacity: 0.7; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  .contraction-btn {
+    width: 190px; height: 190px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    background: radial-gradient(circle at 35% 35%, var(--terracotta-light), var(--terracotta) 60%, var(--deep) 130%);
+    box-shadow: 0 8px 40px rgba(201,127,90,0.35), 0 2px 8px rgba(201,127,90,0.2), inset 0 1px 2px rgba(255,255,255,0.2);
+    transition: background 0.6s ease, box-shadow 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    overflow: hidden;
+    transform: scale(1);
+    will-change: transform;
+  }
+  .contraction-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .contraction-btn:not(.active-state):active {
+    transform: scale(0.94) !important;
+  }
+  .contraction-btn.active-state {
+    animation: none;
+  }
+  .contraction-btn.active-state.breath-in {
+    background: radial-gradient(circle at 35% 35%, var(--green-light), var(--green) 55%, #5a8260 130%);
+    box-shadow: 0 8px 40px rgba(122,158,126,0.4), 0 2px 8px rgba(122,158,126,0.25), inset 0 1px 2px rgba(255,255,255,0.2);
+  }
+  .contraction-btn.active-state.breath-out {
+    background: radial-gradient(circle at 35% 35%, var(--blush), var(--terracotta-light) 55%, var(--terracotta) 130%);
+    box-shadow: 0 8px 40px rgba(201,127,90,0.35), 0 2px 8px rgba(201,127,90,0.2), inset 0 1px 2px rgba(255,255,255,0.2);
+  }
+
+  .btn-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 300;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.9);
+    position: relative; z-index: 1;
+  }
+  .btn-timer {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px; font-weight: 300; color: white;
+    line-height: 1; position: relative; z-index: 1;
+  }
+  .btn-hint {
+    font-size: 10px; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.65);
+    position: relative; z-index: 1;
+  }
+
+  .breath-cues {
+    width: 100%;
+    max-width: 340px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    text-align: center;
+    padding: 0 8px;
+  }
+  .breath-cues.visible { opacity: 1; pointer-events: auto; }
+
+  .breath-cue {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-style: italic;
+    color: var(--text); letter-spacing: 0.03em;
+    min-height: 26px; line-height: 1.35;
+    transition: opacity 0.4s;
+  }
+  .breath-phase-label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .breath-technique {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--terracotta);
+  }
+  .breath-count-dots { display: flex; gap: 6px; align-items: center; min-height: 14px; }
+  .breath-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--sand);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .breath-dot.done { background: var(--green); transform: scale(1.2); }
+  .breath-dot.current { background: var(--terracotta-light); transform: scale(1.4); animation: dot-pulse 1s ease-in-out infinite; }
+  @keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .rest-cue {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-style: italic;
+    color: var(--green);
+    text-align: center;
+    padding: 4px 20px;
+    min-height: 22px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    flex-shrink: 0;
+  }
+  .rest-cue.visible { opacity: 1; }
+
+  .log-section {
+    flex-shrink: 0;
+    padding: 6px 20px 16px;
+    max-height: 22vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .log-title {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .log-empty {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-size: 14px;
+    color: var(--muted); text-align: center; padding: 8px 0;
+  }
+  .log-list { display: flex; flex-direction: column; gap: 5px; }
+  .log-item {
+    display: flex; align-items: center;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(232,213,188,0.6);
+    border-radius: 12px; padding: 8px 14px;
+    backdrop-filter: blur(4px);
+    animation: slide-in 0.35s cubic-bezier(0.34,1.36,0.64,1) both;
+  }
+  @keyframes slide-in {
+    from { transform: translateY(-8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .log-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; color: var(--terracotta);
+    width: 26px; flex-shrink: 0;
+  }
+  .log-details { flex: 1; }
+  .log-duration { font-size: 12px; color: var(--text); }
+  .log-time-gap { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .log-intensity { display: flex; gap: 2px; align-items: center; }
+  .intensity-bar { width: 4px; border-radius: 2px; background: var(--sand); }
+  .log-section::-webkit-scrollbar { width: 3px; }
+  .log-section::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 2px; }
+
+  /* ── SETUP OVERLAY ── */
+  .setup-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--cream);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 28px; gap: 20px; text-align: center;
+  }
+  .setup-overlay.hidden { display: none; }
+  .setup-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; color: var(--deep);
+  }
+  .setup-title em { font-style: italic; color: var(--terracotta); }
+  .setup-body { font-size: 14px; color: var(--text-light); line-height: 1.7; max-width: 320px; }
+  .setup-input-wrap { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; }
+  .setup-input {
+    width: 100%; padding: 14px 18px; border-radius: 14px;
+    border: 1.5px solid var(--sand); background: var(--warm-white);
+    font-family: 'Jost', sans-serif; font-size: 14px; color: var(--text);
+    outline: none; text-align: center; letter-spacing: 0.08em;
+  }
+  .setup-input:focus { border-color: var(--terracotta-light); }
+  .setup-btn {
+    width: 100%; padding: 16px; border-radius: 14px; border: none;
+    cursor: pointer; background: var(--terracotta); color: white;
+    font-family: 'Jost', sans-serif; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .setup-divider { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .setup-new-btn {
+    background: none; border: 1.5px solid var(--sand); color: var(--muted);
+    font-family: 'Jost', sans-serif; font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 12px; border-radius: 14px; cursor: pointer;
+    width: 100%; max-width: 320px;
+  }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<div class="setup-overlay hidden" id="setupOverlay">
+  <div class="setup-title">breathe <em>&</em> birth</div>
+  <div class="setup-body">Enter a session code to sync with your partner, or start a new session and share the code.</div>
+  <div class="setup-body" id="firebaseWarning" style="display:none;color:var(--terracotta);font-size:12px;">Firebase config needed — replace placeholder values in index.html before first use.</div>
+  <div class="setup-input-wrap">
+    <input class="setup-input" id="sessionInput" type="text" placeholder="Enter session code" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    <button class="setup-btn" onclick="joinSession()">Join session</button>
+  </div>
+  <div class="setup-divider">or</div>
+  <button class="setup-new-btn" onclick="newSession()">Start new session</button>
+</div>
+
+<div id="app">
+  <div class="connection-banner" id="connectionBanner">Check your connection — unable to sync</div>
+
+  <header>
+    <div class="app-title">breathe <em>&</em> birth</div>
+    <button class="reset-btn" onclick="resetAll()">Clear all</button>
+  </header>
+
+  <div class="session-bar">
+    <div class="sync-dot" id="syncDot"></div>
+    <div class="session-label">Session</div>
+    <div class="session-code" id="sessionCodeDisplay">—</div>
+    <button class="share-btn" onclick="shareSession()">Share link</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-value" id="stat-count">—</div>
+      <div class="stat-label">Contractions</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-value" id="stat-avg-dur">—</div>
+      <div class="stat-label">Avg Duration</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-value" id="stat-freq">—</div>
+      <div class="stat-label">Frequency</div>
+    </div>
+  </div>
+
+  <div class="threshold-card" id="thresholdCard">
+    <div class="threshold-title">Ready for hospital?</div>
+    <div class="threshold-meters">
+      <div class="threshold-meter">
+        <div class="meter-header">
+          <span>Duration</span>
+          <span class="meter-value" id="meter-dur-val">—</span>
+        </div>
+        <div class="meter-track">
+          <div class="meter-target" id="meter-dur-target" style="left:50%;width:33%"></div>
+          <div class="meter-fill" id="meter-dur-fill" style="width:0%"></div>
+        </div>
+        <div class="meter-target-label">Target 40–60s</div>
+      </div>
+      <div class="threshold-meter">
+        <div class="meter-header">
+          <span>Frequency</span>
+          <span class="meter-value" id="meter-freq-val">—</span>
+        </div>
+        <div class="meter-track">
+          <div class="meter-target" id="meter-freq-target" style="left:25%;width:50%"></div>
+          <div class="meter-fill" id="meter-freq-fill" style="width:0%"></div>
+        </div>
+        <div class="meter-target-label">Target 3–5 min apart</div>
+      </div>
+    </div>
+    <div class="threshold-status">
+      <div class="status-pip" id="pip-notyet"></div>
+      <div class="status-pip" id="pip-close"></div>
+      <div class="status-pip" id="pip-call"></div>
+      <span class="status-label" id="statusLabel">Not yet</span>
+    </div>
+    <div class="threshold-ref">Many care teams suggest calling when contractions last ~1 minute, are ~5 minutes apart, for ~1 hour.</div>
+    <div class="threshold-dynamic" id="thresholdDynamic"></div>
+    <div class="threshold-disclaimer">This is a guide only — follow your care provider's advice.</div>
+  </div>
+
+  <div class="graph-panel" id="graphPanel">
+    <div class="graph-title">Contraction pattern</div>
+    <div class="graph-scroll" id="graphScroll">
+      <svg class="graph-svg" id="graphSvg" height="100"></svg>
+    </div>
+    <div class="trend-strip" id="trendStrip"></div>
+  </div>
+
+  <div class="main">
+    <div class="contraction-btn-wrap">
+      <div class="pulse-ring" id="ring1"></div>
+      <div class="pulse-ring pulse-ring-2" id="ring2"></div>
+      <button class="contraction-btn" id="mainBtn" ontouchstart="handlePress()" onclick="handlePress()">
+        <div class="btn-label" id="btnLabel">Tap to start</div>
+        <div class="btn-timer" id="btnTimer" style="display:none">0:00</div>
+        <div class="btn-hint" id="btnHint">tap when contraction begins</div>
+      </button>
+    </div>
+
+    <div class="breath-cues" id="breathCues">
+      <div class="breath-cue" id="breathCue">breathe in…</div>
+      <div class="breath-phase-label" id="breathPhaseLabel"></div>
+      <div class="breath-technique" id="breathTechnique"></div>
+      <div class="breath-count-dots" id="breathDots"></div>
+    </div>
+  </div>
+
+  <div class="rest-cue" id="restCue"></div>
+
+  <div class="log-section">
+    <div class="log-title">Contraction history</div>
+    <div class="log-empty" id="logEmpty">Your contractions will appear here</div>
+    <div class="log-list" id="logList"></div>
+  </div>
+</div>
+
+<script type="module">
+const firebaseConfig = {
+  apiKey:            "AIzaSyDoNBe9DzbgMvuZlwwhqMEc7XVvvj7evHk",
+  authDomain:        "contraction-tracker-cf3da.firebaseapp.com",
+  databaseURL:       "https://contraction-tracker-cf3da-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "contraction-tracker-cf3da",
+  storageBucket:     "contraction-tracker-cf3da.firebasestorage.app",
+  messagingSenderId: "435140534730",
+  appId:             "1:435140534730:web:bf4e5ddd59d50d727e2f33",
+  measurementId:     "G-1W22XV3D71"
+};
+
+const FIREBASE_CONFIGURED = !firebaseConfig.apiKey.includes('REPLACE_WITH');
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, remove, update }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+let app, db;
+if (FIREBASE_CONFIGURED) {
+  app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+}
+
+// ── STATE ──
+let sessionId = null;
+let contractions = [];
+let isActive = false;
+let startTime = null;
+let timerInterval = null;
+let breathInterval = null;
+let breathPhase = 'in';
+let breathPhaseTimer = 0;
+let breathCycleCount = 0;
+let totalBreathsForContraction = 0;
+let cueIndexIn = 0;
+let cueIndexOut = 0;
+let techniqueIndex = 0;
+let breathOut = 7;
+let syncTimeout = null;
+let lastSyncTime = null;
+let restCueTimeout = null;
+
+const BREATH_IN = 4;
+const DUR_TARGET_MIN = 40000;
+const DUR_TARGET_MAX = 60000;
+const FREQ_TARGET_MIN = 180000;
+const FREQ_TARGET_MAX = 300000;
+
+const breathCues = {
+  in: [
+    "Breathe in through your nose — jaw soft, shoulders down",
+    "Let your belly rise; don't brace or grip your pelvic floor",
+    "Imagine space opening inside, not squeezing",
+    "J-breath: inhale gently, let the breath travel down and out through your pelvis",
+    "Inhale like you're smelling a flower — easy, not forced",
+  ],
+  out: [
+    "Long slow exhale — imagine your pelvic floor blooming open",
+    "Breathe out through soft lips, like fogging a mirror",
+    "As you exhale, let your sit bones widen and your pelvic floor release",
+    "Each out-breath is a wave washing tension away",
+    "Open and soften — your body knows how to make space",
+  ],
+  rest: [
+    "Beautiful. Rest completely until the next wave",
+    "Let your whole body go heavy between contractions",
+    "Soft jaw, soft hands — gather your strength",
+    "You are doing so well. Let everything go limp",
+  ],
+};
+
+const breathTechniques = [
+  "J-breath · pelvic release",
+  "Soft inhale · open exhale",
+  "Active birth breathing",
+  "Pelvic floor bloom",
+];
+
+// ── SESSION SETUP ──
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+window.newSession = function() {
+  startWithSession(generateCode());
+};
+
+window.joinSession = function() {
+  const input = document.getElementById('sessionInput');
+  const code = input.value.trim().toUpperCase();
+  if (!code) { input.focus(); return; }
+  startWithSession(code);
+};
+
+document.getElementById('sessionInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.joinSession();
+});
+
+const urlCode = new URLSearchParams(location.search).get('s');
+if (!FIREBASE_CONFIGURED) {
+  document.getElementById('firebaseWarning').style.display = 'block';
+}
+if (urlCode) {
+  startWithSession(urlCode.toUpperCase());
+} else {
+  document.getElementById('setupOverlay').classList.remove('hidden');
+  document.getElementById('app').style.visibility = 'hidden';
+}
+
+function startWithSession(code) {
+  if (!FIREBASE_CONFIGURED) {
+    alert('Firebase is not configured yet. Replace the placeholder values in firebaseConfig before using sessions.');
+    return;
+  }
+  sessionId = code;
+  document.getElementById('setupOverlay').classList.add('hidden');
+  document.getElementById('app').style.visibility = 'visible';
+  document.getElementById('sessionCodeDisplay').textContent = code;
+
+  const url = new URL(location.href);
+  url.searchParams.set('s', code);
+  history.replaceState(null, '', url.toString());
+
+  subscribeToSession(code);
+  subscribeToConnection();
+}
+
+window.shareSession = function() {
+  const url = location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Breathe & Birth — contraction tracker', url });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.share-btn');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    });
+  }
+};
+
+// ── FIREBASE SYNC ──
+function setSyncState(state) {
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot' + (state === 'connected' ? ' connected' : state === 'syncing' ? ' syncing' : '');
+  if (state === 'connected') {
+    document.getElementById('connectionBanner').classList.remove('visible');
+  } else if (state === 'error') {
+    document.getElementById('connectionBanner').classList.add('visible');
+  }
+}
+
+// Use Firebase's built-in connection state — far more reliable than timeouts
+function subscribeToConnection() {
+  if (!db) return;
+  onValue(ref(db, '.info/connected'), snap => {
+    setSyncState(snap.val() === true ? 'connected' : 'error');
+  });
+}
+
+function subscribeToSession(code) {
+  setSyncState('syncing');
+
+  const activeRef = ref(db, `sessions/${code}/active`);
+  onValue(activeRef, snap => {
+    const data = snap.val();
+    if (data && data.startedAt) {
+      if (!isActive) {
+        isActive = true;
+        startTime = data.startedAt;
+        setButtonActive(true);
+        startBreathing(getAvgDuration());
+        startTimerDisplay();
+      }
+    } else if (isActive) {
+      isActive = false;
+      clearInterval(timerInterval);
+      stopBreathing();
+      setButtonActive(false);
+      showRestCue();
+    }
+    setSyncState('connected');
+  }, () => setSyncState('error'));
+
+  const contractionsRef = ref(db, `sessions/${code}/contractions`);
+  onValue(contractionsRef, snap => {
+    const data = snap.val();
+    contractions = data
+      ? Object.values(data).sort((a, b) => b.startTime - a.startTime)
+      : [];
+    updateStats();
+    renderLog();
+    renderThreshold();
+    renderGraph();
+    setSyncState('connected');
+  }, () => setSyncState('error'));
+}
+
+// ── CONTRACTION LOGIC ──
+window.handlePress = function() {
+  if (!sessionId) return;
+  if (isActive) endContraction();
+  else startContraction();
+};
+
+function getAvgDuration() {
+  if (contractions.length === 0) return 60000;
+  return contractions.reduce((a, c) => a + c.duration, 0) / contractions.length;
+}
+
+function startContraction() {
+  isActive = true;
+  startTime = Date.now();
+  hideRestCue();
+  setButtonActive(true);
+  startBreathing(getAvgDuration());
+  startTimerDisplay();
+  set(ref(db, `sessions/${sessionId}/active`), { startedAt: startTime });
+}
+
+function endContraction() {
+  if (!isActive) return;
+  isActive = false;
+  const duration = Date.now() - startTime;
+  clearInterval(timerInterval);
+  stopBreathing();
+  setButtonActive(false);
+  showRestCue();
+
+  const sortedByTime = [...contractions].sort((a, b) => a.startTime - b.startTime);
+  const prev = sortedByTime[sortedByTime.length - 1];
+  const gap = prev ? (startTime - (prev.startTime + prev.duration)) : null;
+  const newContraction = { duration, startTime, gap: gap !== null ? gap : null };
+
+  const newRef = push(ref(db, `sessions/${sessionId}/contractions`));
+  const updates = {};
+  updates[`sessions/${sessionId}/active`] = null;
+  updates[`sessions/${sessionId}/contractions/${newRef.key}`] = newContraction;
+  update(ref(db), updates);
+}
+
+function startTimerDisplay() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (!startTime) return;
+    const elapsed = Date.now() - startTime;
+    const secs = Math.floor(elapsed / 1000);
+    document.getElementById('btnTimer').textContent =
+      `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
+
+    if (elapsed > 0 && elapsed % 15000 < 200) {
+      totalBreathsForContraction = calcBreathsForDuration(elapsed * 1.4);
+      renderBreathDots();
+    }
+  }, 200);
+}
+
+function setButtonActive(active) {
+  const btn = document.getElementById('mainBtn');
+  if (active) {
+    btn.classList.add('active-state');
+    document.getElementById('ring1').classList.add('active');
+    document.getElementById('ring2').classList.add('active');
+    document.getElementById('btnTimer').style.display = 'block';
+    document.getElementById('btnHint').textContent = 'tap when it ends';
+    document.getElementById('breathCues').classList.add('visible');
+  } else {
+    btn.classList.remove('active-state', 'breath-in', 'breath-out');
+    btn.style.transform = 'scale(1)';
+    document.getElementById('ring1').classList.remove('active');
+    document.getElementById('ring2').classList.remove('active');
+    document.getElementById('btnLabel').textContent = 'Tap to start';
+    document.getElementById('btnTimer').style.display = 'none';
+    document.getElementById('btnTimer').textContent = '0:00';
+    document.getElementById('btnHint').textContent = 'tap when contraction begins';
+    // Keep breathing section visible with a rest cue rather than hiding it
+    document.getElementById('breathCues').classList.add('visible');
+    document.getElementById('breathCue').textContent = 'Rest & breathe slowly';
+    document.getElementById('breathPhaseLabel').textContent = 'between contractions';
+    document.getElementById('breathTechnique').textContent = '';
+    // Leave breath dots visible so progress is readable
+  }
+}
+
+function showRestCue() {
+  clearTimeout(restCueTimeout);
+  const el = document.getElementById('restCue');
+  const cue = breathCues.rest[Math.floor(Math.random() * breathCues.rest.length)];
+  el.textContent = cue;
+  el.classList.add('visible');
+  restCueTimeout = setTimeout(() => el.classList.remove('visible'), 8000);
+}
+
+function hideRestCue() {
+  clearTimeout(restCueTimeout);
+  document.getElementById('restCue').classList.remove('visible');
+}
+
+// ── BREATH ENGINE ──
+function calcBreathsForDuration(durationMs) {
+  return Math.max(2, Math.ceil(durationMs / 1000 / (BREATH_IN + breathOut)));
+}
+
+function startBreathing(contractionDurationMs) {
+  stopBreathing();
+  breathPhase = 'in';
+  breathPhaseTimer = 0;
+  breathCycleCount = 0;
+  cueIndexIn = 0;
+  cueIndexOut = 0;
+  techniqueIndex = 0;
+
+  const durSec = contractionDurationMs / 1000;
+  breathOut = durSec < 45 ? 6 : durSec > 75 ? 8 : 7;
+
+  totalBreathsForContraction = calcBreathsForDuration(contractionDurationMs);
+  renderBreathDots();
+  updateBreathPhase();
+
+  const btn = document.getElementById('mainBtn');
+  const TICK = 100;
+
+  breathInterval = setInterval(() => {
+    breathPhaseTimer += TICK / 1000;
+    const phaseTotal = breathPhase === 'in' ? BREATH_IN : breathOut;
+    const progress = Math.min(1, breathPhaseTimer / phaseTotal);
+    const scale = breathPhase === 'in'
+      ? 0.85 + progress * 0.45
+      : 1.3 - progress * 0.45;
+
+    btn.style.transform = `scale(${scale})`;
+
+    if (breathPhaseTimer >= phaseTotal) {
+      breathPhaseTimer = 0;
+      if (breathPhase === 'in') {
+        breathPhase = 'out';
+      } else {
+        breathPhase = 'in';
+        breathCycleCount++;
+        if (breathCycleCount % 2 === 0) {
+          techniqueIndex = (techniqueIndex + 1) % breathTechniques.length;
+        }
+        renderBreathDots();
+      }
+      updateBreathPhase();
+    }
+  }, TICK);
+}
+
+function stopBreathing() {
+  if (breathInterval) { clearInterval(breathInterval); breathInterval = null; }
+  const btn = document.getElementById('mainBtn');
+  btn.style.transform = 'scale(1)';
+  btn.classList.remove('breath-in', 'breath-out');
+}
+
+function updateBreathPhase() {
+  const btn = document.getElementById('mainBtn');
+  const cueEl = document.getElementById('breathCue');
+  const labelEl = document.getElementById('breathPhaseLabel');
+  const techEl = document.getElementById('breathTechnique');
+  const labelBtn = document.getElementById('btnLabel');
+
+  if (breathPhase === 'in') {
+    btn.classList.add('breath-in');
+    btn.classList.remove('breath-out');
+    labelBtn.textContent = 'Breathe in';
+    cueEl.textContent = breathCues.in[cueIndexIn % breathCues.in.length];
+    cueIndexIn++;
+    labelEl.textContent = `${BREATH_IN} seconds through your nose`;
+    cueEl.style.color = 'var(--text)';
+  } else {
+    btn.classList.add('breath-out');
+    btn.classList.remove('breath-in');
+    labelBtn.textContent = 'Breathe out';
+    cueEl.textContent = breathCues.out[cueIndexOut % breathCues.out.length];
+    cueIndexOut++;
+    labelEl.textContent = `${breathOut} seconds, slow & long`;
+    cueEl.style.color = 'var(--text-light)';
+  }
+  techEl.textContent = breathTechniques[techniqueIndex];
+}
+
+function renderBreathDots() {
+  const container = document.getElementById('breathDots');
+  container.innerHTML = '';
+  const total = Math.min(totalBreathsForContraction, 12);
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'breath-dot';
+    if (i < breathCycleCount) d.classList.add('done');
+    else if (i === breathCycleCount) d.classList.add('current');
+    container.appendChild(d);
+  }
+}
+
+// ── THRESHOLD ──
+function scoreDuration(ms) {
+  const s = ms / 1000;
+  if (s < 30) return (s / 30) * 50;
+  if (s < 40) return 50 + ((s - 30) / 10) * 50;
+  if (s <= 60) return 100;
+  if (s <= 90) return 100 - ((s - 60) / 30) * 20;
+  return 80;
+}
+
+function scoreFrequency(gapMs) {
+  if (gapMs === null) return 0;
+  const min = gapMs / 60000;
+  if (min > 8) return Math.max(0, (1 - (min - 8) / 8) * 30);
+  if (min > 5) return 30 + ((8 - min) / 3) * 40;
+  if (min >= 3) return 70 + ((5 - min) / 2) * 30;
+  return 100;
+}
+
+function getRollingAvgs(n = 3) {
+  const recent = contractions.slice(0, Math.min(n, contractions.length));
+  if (recent.length === 0) return { avgDur: null, avgGap: null };
+  const avgDur = recent.reduce((a, c) => a + c.duration, 0) / recent.length;
+  const gaps = recent.filter(c => c.gap != null && !isNaN(c.gap)).map(c => c.gap);
+  const avgGap = gaps.length > 0 ? gaps.reduce((a, b) => a + b, 0) / gaps.length : null;
+  return { avgDur, avgGap };
+}
+
+function renderThreshold() {
+  const card = document.getElementById('thresholdCard');
+  if (contractions.length === 0) {
+    card.classList.remove('visible');
+    return;
+  }
+  card.classList.add('visible');
+
+  const { avgDur, avgGap } = getRollingAvgs(3);
+  const durScore = scoreDuration(avgDur);
+  const freqScore = avgGap !== null ? scoreFrequency(avgGap) : 0;
+
+  const durFill = document.getElementById('meter-dur-fill');
+  const freqFill = document.getElementById('meter-freq-fill');
+  durFill.style.width = durScore + '%';
+  freqFill.style.width = freqScore + '%';
+  durFill.classList.toggle('warn', avgDur > 90000);
+  freqFill.classList.toggle('warn', avgGap !== null && avgGap < FREQ_TARGET_MIN);
+
+  document.getElementById('meter-dur-val').textContent = formatDuration(avgDur);
+  document.getElementById('meter-freq-val').textContent =
+    avgGap !== null ? formatDuration(avgGap) : '—';
+
+  const durInTarget = avgDur >= DUR_TARGET_MIN && avgDur <= DUR_TARGET_MAX;
+  const freqInTarget = avgGap !== null && avgGap >= FREQ_TARGET_MIN && avgGap <= FREQ_TARGET_MAX;
+  const urgent = avgGap !== null && avgGap < FREQ_TARGET_MIN && avgDur > 45000;
+
+  let status = 'notyet';
+  let statusText = 'Not yet';
+  if (urgent) {
+    status = 'urgent';
+    statusText = 'Strong active pattern — call your care team';
+  } else if (durInTarget && freqInTarget && contractions.length >= 3) {
+    status = 'call';
+    statusText = 'Consider calling your care team';
+  } else if (durScore >= 50 || freqScore >= 50) {
+    status = 'close';
+    statusText = 'Getting close';
+  }
+
+  ['notyet', 'close', 'call'].forEach(s => {
+    const pip = document.getElementById('pip-' + s);
+    pip.className = 'status-pip';
+  });
+  const activePip = status === 'urgent' ? 'pip-call' : 'pip-' + status;
+  const pipEl = document.getElementById(activePip === 'pip-urgent' ? 'pip-call' : activePip);
+  if (pipEl) {
+    pipEl.classList.add('active');
+    if (status === 'urgent') pipEl.classList.add('urgent');
+    else if (status === 'call') pipEl.classList.add('warn');
+  }
+  document.getElementById('statusLabel').textContent = statusText;
+
+  let dynamic = '';
+  if (contractions.length >= 1) {
+    const durSec = Math.round(avgDur / 1000);
+    const durOff = durSec < 40 ? `${40 - durSec}s below target duration` :
+      durSec > 60 ? `${durSec - 60}s above target duration` : 'Duration in target range';
+    if (avgGap !== null) {
+      const gapSec = Math.round(avgGap / 1000);
+      const freqOff = gapSec < 180 ? `${Math.round((180 - gapSec) / 60)}m closer than target` :
+        gapSec > 300 ? `${Math.round((gapSec - 300) / 60)}m apart from target` : 'Frequency in target range';
+      dynamic = `${durOff} · ${freqOff}`;
+    } else {
+      dynamic = durOff;
+    }
+  }
+  document.getElementById('thresholdDynamic').textContent = dynamic;
+}
+
+// ── GRAPH ──
+function renderGraph() {
+  const panel = document.getElementById('graphPanel');
+  if (contractions.length === 0) {
+    panel.classList.remove('visible');
+    return;
+  }
+  panel.classList.add('visible');
+
+  const sorted = [...contractions].sort((a, b) => a.startTime - b.startTime);
+  const WINDOW_MS = 90 * 60 * 1000;
+  const now = Date.now();
+  const windowStart = Math.min(sorted[0].startTime, now - WINDOW_MS);
+  const windowEnd = now;
+  const range = windowEnd - windowStart || 1;
+
+  const svgW = Math.max(320, sorted.length * 48);
+  const svgH = 100;
+  const padL = 4, padR = 4, padT = 8, padB = 18;
+  const chartH = svgH - padT - padB;
+
+  let bars = '';
+  sorted.forEach((c, i) => {
+    const x = padL + ((c.startTime - windowStart) / range) * (svgW - padL - padR);
+    const barW = Math.max(6, (c.duration / range) * (svgW - padL - padR));
+    const maxDur = 90000;
+    const barH = Math.max(8, (c.duration / maxDur) * chartH);
+    const y = padT + chartH - barH;
+    const inTarget = c.duration >= DUR_TARGET_MIN && c.duration <= DUR_TARGET_MAX;
+    const fill = inTarget ? '#7a9e7e' : c.duration > 45000 ? '#c97f5a' : '#e09b77';
+    const num = i + 1;
+    const gapStr = c.gap != null && !isNaN(c.gap) ? formatDuration(c.gap) + ' apart' : '';
+    const timeStr = new Date(c.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const title = `#${num} · ${formatDuration(c.duration)}${gapStr ? ' · ' + gapStr : ''} · ${timeStr}`;
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="3" fill="${fill}" opacity="0.85"><title>${title}</title></rect>`;
+  });
+
+  const targetY = padT + chartH - (DUR_TARGET_MIN / 90000) * chartH;
+  const targetH = ((DUR_TARGET_MAX - DUR_TARGET_MIN) / 90000) * chartH;
+  const targetBand = `<rect x="${padL}" y="${targetY.toFixed(1)}" width="${svgW - padL - padR}" height="${targetH.toFixed(1)}" fill="rgba(122,158,126,0.12)" rx="2"/>`;
+
+  document.getElementById('graphSvg').setAttribute('width', svgW);
+  document.getElementById('graphSvg').setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+  document.getElementById('graphSvg').innerHTML = targetBand + bars;
+
+  const scroll = document.getElementById('graphScroll');
+  scroll.scrollLeft = scroll.scrollWidth;
+
+  renderTrendStrip();
+}
+
+function renderTrendStrip() {
+  const strip = document.getElementById('trendStrip');
+  strip.innerHTML = '';
+  const recent = contractions.slice(0, 3).reverse();
+  if (recent.length === 0) return;
+
+  recent.forEach((c, i) => {
+    if (i > 0 && c.gap != null && !isNaN(c.gap)) {
+      const gapEl = document.createElement('div');
+      gapEl.className = 'trend-gap';
+      const inTarget = c.gap >= FREQ_TARGET_MIN && c.gap <= FREQ_TARGET_MAX;
+      if (inTarget) gapEl.classList.add('in-target');
+      const h = Math.min(28, Math.max(6, (c.gap / 480000) * 28));
+      gapEl.style.height = h + 'px';
+      gapEl.title = formatDuration(c.gap) + ' apart';
+      strip.appendChild(gapEl);
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'trend-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'trend-bar';
+    const inTarget = c.duration >= DUR_TARGET_MIN && c.duration <= DUR_TARGET_MAX;
+    if (inTarget) bar.classList.add('in-target');
+    bar.style.height = Math.min(32, Math.max(8, (c.duration / 90000) * 32)) + 'px';
+    bar.title = formatDuration(c.duration);
+    const lbl = document.createElement('div');
+    lbl.className = 'trend-label';
+    lbl.textContent = formatDuration(c.duration);
+    wrap.appendChild(bar);
+    wrap.appendChild(lbl);
+    strip.appendChild(wrap);
+  });
+}
+
+// ── STATS ──
+function updateStats() {
+  const count = contractions.length;
+  document.getElementById('stat-count').textContent = count || '—';
+
+  if (count > 0) {
+    const avgMs = contractions.reduce((a, c) => a + c.duration, 0) / count;
+    document.getElementById('stat-avg-dur').textContent = formatDuration(avgMs);
+  } else {
+    document.getElementById('stat-avg-dur').textContent = '—';
+  }
+
+  if (count > 1) {
+    const gaps = contractions.filter(c => c.gap != null && !isNaN(c.gap)).map(c => c.gap);
+    if (gaps.length > 0) {
+      document.getElementById('stat-freq').textContent =
+        formatDuration(gaps.reduce((a, b) => a + b, 0) / gaps.length);
+    }
+  } else {
+    document.getElementById('stat-freq').textContent = '—';
+  }
+}
+
+function formatDuration(ms) {
+  if (ms == null || isNaN(ms) || ms < 0) return '—';
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return rem > 0 ? `${m}m ${rem}s` : `${m}m`;
+}
+
+// ── LOG ──
+function renderLog() {
+  const listEl = document.getElementById('logList');
+  const emptyEl = document.getElementById('logEmpty');
+
+  if (contractions.length === 0) {
+    emptyEl.style.display = 'block';
+    listEl.innerHTML = '';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  listEl.innerHTML = '';
+
+  contractions.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    const intensity = Math.min(5, Math.round(c.duration / 15000));
+    const bars = Array.from({ length: 5 }, (_, bi) => {
+      const h = 4 + bi * 3;
+      return `<div class="intensity-bar" style="height:${h}px;background:${bi < intensity ? 'var(--terracotta-light)' : 'var(--sand)'}"></div>`;
+    }).join('');
+    const num = contractions.length - i;
+    const timeStr = new Date(c.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const gapStr = c.gap != null && !isNaN(c.gap) ? ` · ${formatDuration(c.gap)} apart` : '';
+    item.innerHTML = `
+      <div class="log-num">${num}</div>
+      <div class="log-details">
+        <div class="log-duration">${formatDuration(c.duration)}</div>
+        <div class="log-time-gap">${timeStr}${gapStr}</div>
+      </div>
+      <div class="log-intensity">${bars}</div>`;
+    listEl.appendChild(item);
+  });
+}
+
+// ── RESET ──
+window.resetAll = function() {
+  if (!sessionId) return;
+  if (contractions.length === 0 && !isActive) return;
+  if (!confirm('Clear all contractions for this session?')) return;
+  if (isActive) {
+    isActive = false;
+    clearInterval(timerInterval);
+    stopBreathing();
+    setButtonActive(false);
+  }
+  remove(ref(db, `sessions/${sessionId}`));
+};
+
+document.getElementById('mainBtn').addEventListener('touchend', e => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>

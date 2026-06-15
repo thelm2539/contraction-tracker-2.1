@@ -1,0 +1,18 @@
+{
+  "name": "Breathe & Birth",
+  "short_name": "Breathe & Birth",
+  "description": "Contraction tracker with breathing guide and partner sync",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf6ee",
+  "theme_color": "#c97f5a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
