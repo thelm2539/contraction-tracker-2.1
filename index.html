@@ -471,6 +471,44 @@
   .graph-label-time { font-size: 7px; fill: var(--muted); font-family: 'Jost', sans-serif; }
   .graph-label-gap { font-size: 7px; font-family: 'Jost', sans-serif; letter-spacing: 0.04em; }
 
+  /* ── DISCLAIMER OVERLAY ── */
+  .disclaimer-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--cream);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 28px; gap: 20px; text-align: center;
+  }
+  .disclaimer-overlay.hidden { display: none; }
+  .disclaimer-icon {
+    font-size: 32px; line-height: 1;
+    color: var(--terracotta);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+  }
+  .disclaimer-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 300; color: var(--deep);
+    letter-spacing: 0.02em;
+  }
+  .disclaimer-body {
+    font-size: 13px; color: var(--text-light);
+    line-height: 1.75; max-width: 300px;
+  }
+  .disclaimer-body strong { color: var(--text); font-weight: 400; }
+  .disclaimer-accept {
+    width: 100%; max-width: 300px;
+    padding: 16px; border-radius: 14px; border: none;
+    cursor: pointer; background: var(--terracotta); color: white;
+    font-family: 'Jost', sans-serif; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .disclaimer-link {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 0.05em; text-decoration: underline;
+    cursor: pointer; background: none; border: none;
+  }
+
   /* ── SETUP OVERLAY ── */
   .setup-overlay {
     position: fixed; inset: 0; z-index: 100;
@@ -514,6 +552,18 @@
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
+</div>
+
+<div class="disclaimer-overlay hidden" id="disclaimerOverlay">
+  <div class="disclaimer-icon">&#x2665;</div>
+  <div class="disclaimer-title">Before you begin</div>
+  <div class="disclaimer-body">
+    Breathe & Birth helps you <strong>time contractions</strong> during labour.<br><br>
+    It does not diagnose labour or medical conditions, and is <strong>not a substitute for professional medical advice</strong>.<br><br>
+    Always follow the guidance of your midwife, obstetrician, or care provider.
+  </div>
+  <button class="disclaimer-accept" onclick="acceptDisclaimer()">I understand — let's go</button>
+  <a class="disclaimer-link" href="privacy.html" target="_blank">Privacy Policy</a>
 </div>
 
 <div class="setup-overlay hidden" id="setupOverlay">
@@ -645,8 +695,24 @@ const firebaseConfig = {
   projectId:         "contraction-tracker-cf3da",
   storageBucket:     "contraction-tracker-cf3da.firebasestorage.app",
   messagingSenderId: "435140534730",
-  appId:             "1:435140534730:web:bf4e5ddd59d50d727e2f33",
-  measurementId:     "G-1W22XV3D71"
+  appId:             "1:435140534730:web:bf4e5ddd59d50d727e2f33"
+};
+
+// ── DISCLAIMER (shown once on first visit, stored in localStorage) ──
+if (!localStorage.getItem('disclaimer_accepted')) {
+  document.getElementById('disclaimerOverlay').classList.remove('hidden');
+  document.getElementById('app').style.visibility = 'hidden';
+}
+
+window.acceptDisclaimer = function() {
+  localStorage.setItem('disclaimer_accepted', '1');
+  document.getElementById('disclaimerOverlay').classList.add('hidden');
+  document.getElementById('app').style.visibility = 'visible';
+  // Now show the session setup if no session in URL
+  if (!new URLSearchParams(location.search).get('s')) {
+    document.getElementById('setupOverlay').classList.remove('hidden');
+    document.getElementById('app').style.visibility = 'hidden';
+  }
 };
 
 const FIREBASE_CONFIGURED = !firebaseConfig.apiKey.includes('REPLACE_WITH');
@@ -744,11 +810,14 @@ const urlCode = new URLSearchParams(location.search).get('s');
 if (!FIREBASE_CONFIGURED) {
   document.getElementById('firebaseWarning').style.display = 'block';
 }
-if (urlCode) {
-  startWithSession(urlCode.toUpperCase());
-} else {
-  document.getElementById('setupOverlay').classList.remove('hidden');
-  document.getElementById('app').style.visibility = 'hidden';
+// Only proceed to session setup if disclaimer has been accepted
+if (localStorage.getItem('disclaimer_accepted')) {
+  if (urlCode) {
+    startWithSession(urlCode.toUpperCase());
+  } else {
+    document.getElementById('setupOverlay').classList.remove('hidden');
+    document.getElementById('app').style.visibility = 'hidden';
+  }
 }
 
 function startWithSession(code) {
